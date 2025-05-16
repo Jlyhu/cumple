@@ -1,1 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>¿Falso o Cierto? 🎥</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f0f0f0;
+            margin: 0;
+            min-height: 100vh;
+        }
 
+        .contenedor-juego {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 500px;
+            margin-top: 30px;
+        }
+
+        .tarjeta {
+            position: absolute;
+            width: 90%;
+            height: 70%;
+            left: 5%;
+            top: 10%;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.5s, opacity 0.3s;
+            overflow: hidden;
+        }
+
+        .video-pregunta {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+
+        .controles {
+            position: absolute;
+            bottom: -80px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .boton-respuesta {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #btnFalso {
+            background: #FF4444;
+        }
+
+        #btnCierto {
+            background: #4CAF50;
+        }
+
+        .boton-respuesta:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .progreso {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        @keyframes confeti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>¿Falso o Cierto? 🎬</h1>
+    
+    <div class="contenedor-juego">
+        <div class="tarjeta">
+            <video class="video-pregunta" controls id="videoPregunta">
+                <source src="pregunta1.mp4" type="video/mp4">
+                Tu navegador no soporta videos HTML5
+            </video>
+        </div>
+        
+        <div class="controles">
+            <button class="boton-respuesta" id="btnFalso">FALSO ❌</button>
+            <button class="boton-respuesta" id="btnCierto">CIERTO ✔</button>
+        </div>
+    </div>
+
+    <div class="progreso">Pregunta 1/3</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+        const preguntas = [
+            {
+                video: "pregunta1.mp4",
+                respuesta: true
+            },
+            {
+                video: "pregunta2.mp4",
+                respuesta: false
+            },
+            {
+                video: "pregunta3.mp4",
+                respuesta: true
+            }
+        ];
+
+        let preguntaActual = 0;
+        const videoElement = document.getElementById("videoPregunta");
+        const textoProgreso = document.querySelector(".progreso");
+
+        function lanzarConfeti() {
+            const count = 200;
+            const defaults = {
+                origin: { y: 0.7 },
+                colors: ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF']
+            };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio),
+                    angle: 60,
+                    spread: 55,
+                    scalar: 1.2
+                }));
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio),
+                    angle: 120,
+                    spread: 55,
+                    scalar: 1.2
+                }));
+            }
+
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91 });
+        }
+
+        function cargarPregunta() {
+            videoElement.src = preguntas[preguntaActual].video;
+            videoElement.load();
+            textoProgreso.textContent = `Pregunta ${preguntaActual + 1}/${preguntas.length}`;
+            videoElement.play();
+        }
+
+        function manejarRespuesta(respuesta) {
+            const correcto = preguntas[preguntaActual].respuesta === respuesta;
+            
+            if(correcto) {
+                lanzarConfeti();
+                videoElement.style.transform = "scale(1.2)";
+                videoElement.style.opacity = "0";
+            } else {
+                videoElement.style.transform = "translateX(${respuesta ? 100 : -100}%) rotate(${respuesta ? 30 : -30}deg)";
+                videoElement.style.opacity = "0";
+            }
+
+            setTimeout(() => {
+                if(preguntaActual < preguntas.length - 1) {
+                    preguntaActual++;
+                    cargarPregunta();
+                    videoElement.style.transform = "scale(1)";
+                    videoElement.style.opacity = "1";
+                } else {
+                    document.querySelector(".tarjeta").innerHTML = "<h2>¡Juego Completado! 🏆</h2>";
+                    document.querySelector(".controles").remove();
+                }
+            }, 1500);
+        }
+
+        document.getElementById("btnFalso").addEventListener("click", () => manejarRespuesta(false));
+        document.getElementById("btnCierto").addEventListener("click", () => manejarRespuesta(true));
+
+        // Iniciar primera pregunta
+        cargarPregunta();
+    </script>
+</body>
+</html>
